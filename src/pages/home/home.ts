@@ -15,11 +15,17 @@ import { AngularFireObject } from 'angularfire2/database/interfaces';
 })
 export class HomePage implements OnInit{
 
-  songs: Observable<Songs[]>;
-  Song: AngularFireList<any>;
+  songs: Observable<any[]>;
+  Song: AngularFireList<Songs>;
   constructor(public navCtrl: NavController, public alertCtrl: AlertController,
     public afDb: AngularFireDatabase, public actionSheetCtrl: ActionSheetController) {
-    this.songs = this.afDb.list('/songs').valueChanges();
+    this.songs = this.afDb.list('/songs').snapshotChanges().map(actions => {
+      return actions.map(a => {
+        const data = a.payload.val() as Songs;
+        const id = a.payload.key;
+        return {id, data};
+      })
+    })
     this.Song = this.afDb.list('/songs');
   }
 
@@ -92,7 +98,7 @@ export class HomePage implements OnInit{
     actionSheet.present();
   }
 
-  removeSong(songId: string){
+  removeSong(songId){
     this.Song.remove(songId);
   }
 
@@ -114,15 +120,16 @@ export class HomePage implements OnInit{
             console.log('Cancel clicked');
           }
         },
-        // {
-        //   text: 'Save',
-        //   handler: data => {
-        //     this.songs.update(songId, {
-        //       title: data.title
-        //     });
-        //   }
-        // }
+        {
+          text: 'Save',
+          handler: data => {
+            this.Song.update(songId, {
+              title: data.title
+            });
+          }
+        }
       ]
+      
     });
     prompt.present();
   }
