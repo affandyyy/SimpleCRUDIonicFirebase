@@ -1,8 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import {AngularFireDatabase, AngularFireList} from 'angularfire2/database';
 import { NavController, AlertController, ActionSheetController } from 'ionic-angular';
 import { HttpClientModule } from '@angular/common/http';
 import { HttpModule } from '@angular/http';
+import { Songs } from '../../model/song.model';
+import { Observable } from 'rxjs/Observable';
+import { AngularFireObject } from 'angularfire2/database/interfaces';
 
 
 
@@ -10,15 +13,25 @@ import { HttpModule } from '@angular/http';
   selector: 'page-home',
   templateUrl: 'home.html'
 })
-export class HomePage {
+export class HomePage implements OnInit{
 
-  songs: AngularFireList<any>;
+  songs: Observable<Songs[]>;
+  Song: AngularFireList<any>;
   constructor(public navCtrl: NavController, public alertCtrl: AlertController,
-    afDb: AngularFireDatabase, public actionSheetCtrl: ActionSheetController) {
-    this.songs = afDb.list('/songs');
+    public afDb: AngularFireDatabase, public actionSheetCtrl: ActionSheetController) {
+    this.songs = this.afDb.list('/songs').valueChanges();
+    this.Song = this.afDb.list('/songs');
+  }
 
+  ngOnInit(){
     
   }
+
+//   get (): AngularFireList<any[]>{
+//     return this.afDb.list('/songs');
+// }
+
+
 
   addSong(){
     let prompt = this.alertCtrl.create({
@@ -40,7 +53,7 @@ export class HomePage {
         {
           text: 'Save',
           handler: data => {
-            this.songs.push({
+            this.Song.push({
               title: data.title
             });
           }
@@ -51,6 +64,8 @@ export class HomePage {
   }
 
   showOptions(songId, songTitle) {
+    console.log(songId, songTitle);
+    
     let actionSheet = this.actionSheetCtrl.create({
       title: 'What do you want to do?',
       buttons: [
@@ -78,7 +93,7 @@ export class HomePage {
   }
 
   removeSong(songId: string){
-    this.songs.remove(songId);
+    this.Song.remove(songId);
   }
 
   updateSong(songId, songTitle){
@@ -99,14 +114,14 @@ export class HomePage {
             console.log('Cancel clicked');
           }
         },
-        {
-          text: 'Save',
-          handler: data => {
-            this.songs.update(songId, {
-              title: data.title
-            });
-          }
-        }
+        // {
+        //   text: 'Save',
+        //   handler: data => {
+        //     this.songs.update(songId, {
+        //       title: data.title
+        //     });
+        //   }
+        // }
       ]
     });
     prompt.present();
